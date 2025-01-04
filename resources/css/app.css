@@ -1,3 +1,5 @@
+@import "/node_modules/admin-lte/plugins/fontawesome-free/css/all";
+@import "/node_modules/admin-lte/dist/css/adminlte";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
