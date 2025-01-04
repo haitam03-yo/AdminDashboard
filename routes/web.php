@@ -5,11 +5,15 @@ use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/test', function () {
-    return Inertia::render('test');
-});
-
 Route::get('/', function () {
+    return Inertia::render('home');
+})->name("home");
+
+Route::get('/products', function () {
+    return Inertia::render('products');
+})->name("products");
+
+Route::get('/dashboardLaravel', function () {
     return Inertia::render('Welcome', [
         'canLogin' => Route::has('login'),
         'canRegister' => Route::has('register'),

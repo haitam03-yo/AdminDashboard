@@ -10,11 +10,19 @@ const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
-    resolve: (name) =>
-        resolvePageComponent(
+    resolve: async (name) => {
+        // Dynamically import the page component
+        const page = await resolvePageComponent(
             `./Pages/${name}.vue`,
-            import.meta.glob('./Pages/**/*.vue'),
-        ),
+            import.meta.glob('./Pages/**/*.vue')
+        );
+    
+        // If no layout is defined, apply the default MainLayout
+        page.default.layout = page.default.layout || (await import('./Layouts/MainLayout.vue')).default;
+    
+        return page;
+    },
+    
     setup({ el, App, props, plugin }) {
         return createApp({ render: () => h(App, props) })
             .use(plugin)
