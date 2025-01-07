@@ -16,7 +16,10 @@
                     <img src="~admin-lte/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
                 </div>
                 <div class="info">
-                    <Link href="#" class="d-block">haitam</Link>
+                    <Link href="#" class="d-block" v-if="$page.props.auth.user"> 
+    {{ $page.props.auth.user.name }} 
+</Link>
+
                 </div>
             </div>
 
@@ -47,6 +50,12 @@
                         <Link :href="route('product.create')" class="nav-link" :class="{'active' :$page.component === 'product/create'}">
                             <i class="nav-icon fas fa-th"></i>
                             <p>Add Products</p>
+                        </Link>
+                    </li>
+                    <li class="nav-item">
+                        <Link :href="route('forecast.product')" class="nav-link" :class="{'active' :$page.component === 'forecast/product'}">
+                            <i class="nav-icon fas fa-th"></i>
+                            <p>Forecast </p>
                         </Link>
                     </li>
 
