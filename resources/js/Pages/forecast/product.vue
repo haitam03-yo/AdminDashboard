@@ -7,9 +7,7 @@
                 </div>
                 <div class="col-sm-6">
                     <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item">
-        <a :href="route('home')">Home</a>
-    </li>
+                        
                         <li class="breadcrumb-item"><Link :href="route('home')">Home</Link></li>
                         <li class="breadcrumb-item active">Sales Quantity Forecasting</li>
                     </ol>
@@ -88,22 +86,36 @@
                             <div class="form-group">
                                 <label for="productSelect">Select Product:</label>
                                 <select id="productSelect" v-model="selectedProduct" class="form-control">
-                                    <option v-for="product in products_id" :key="product" :value="product">
-                                        {{ product }}
-                                    </option>
-                                </select>
+    <option v-for="product in products_id" :key="product" :value="product">
+        {{ product }}
+    </option>
+</select>
+
                             </div>
                         </div>
                     </div>
+                    <div class="row d-flex justify-content-center">
+                        <div class="col-6 ">
+                            <canvas id="salesChart" ></canvas>
+                        </div>
+                    </div>
+                
                 </div>
+                
                 <div class="card-footer">
                     <button @click="sendApiRequest" class="btn btn-primary" :disabled="isLoading">Send Request</button>
                     <span v-if="isLoading" class="ml-2">Loading...</span>
                     <div v-if="errorMessage" class="mt-2 text-danger">{{ errorMessage }}</div>
                 </div>
+                
             </div>
+            
         </div>
+        
     </section>
+    <!-- Chart container -->
+
+
 </template>
 <script setup>
     import { Link } from '@inertiajs/vue3'
@@ -114,6 +126,7 @@
 
 
 import axios from 'axios';
+import { Chart } from 'chart.js';
 
 export default {
     props: {
@@ -121,6 +134,10 @@ export default {
             type: Array,
             required: true,
         },
+        get_selected_product_id:{
+            type:String,
+            default: 'ALI-012022-020',
+        }
     },
     data() {
         return {
@@ -136,7 +153,7 @@ export default {
             selectedDayTime: 'Soirée',
             selectedRegion: 'Urbain',
             selectedWeather: 'Neigeux',
-            selectedProduct: 'ALI-012022-020',
+            selectedProduct: this.get_selected_product_id ,
             productDetails: null,
             currentDate: new Date().toISOString(),
             isLoading: false,
@@ -185,19 +202,19 @@ export default {
         },
 
         async sendApiRequest() {
-            this.isLoading = true;
-            this.errorMessage = null;
+  this.isLoading = true;
+  this.errorMessage = null;
 
-            // Ensure product details are available before sending request
-            if (!this.productDetails) {
-                this.errorMessage = "Product details are not available.";
-                this.isLoading = false;
-                return;
-            }
+  // Ensure product details are available before sending request
+  if (!this.productDetails) {
+    this.errorMessage = "Product details are not available.";
+    this.isLoading = false;
+    return;
+  }
 
-            // Log the request payload to check structure
-            const payload = {
-                id_produit: this.productDetails.id,
+  // Log the request payload to check structure
+  const payload = {
+    id_produit: this.productDetails.id,
     prix_unitaire: this.productDetails.prix_unitaire,
     marque: this.productDetails.marque,
     categorie: this.productDetails.categorie,
@@ -208,29 +225,83 @@ export default {
     region: this.selectedRegion,
     condition_meteo: this.selectedWeather,
     forecast_period: this.selectedForecastPeriod,
+  };
+
+  console.log('Sending API request with data:', payload);
+
+  try {
+    const response = await axios.post('http://127.0.0.1:5000/api/v1/ml/predict_sales', payload, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+
+    console.log('API response:', response.data);
+
+    // Check if predicted_sales data exists in the response
+    if (response.data && response.data.predicted_sales) {
+      this.chartData = this.generateChartData(response.data.predicted_sales);
+      this.updateChart(this.chartData); // Update chart with the generated data
+    } else {
+      this.errorMessage = "Predicted sales data not found in the response.";
+    }
+  } catch (error) {
+    console.error('Error sending API request:', error);
+    this.errorMessage = error.response?.data?.detail || "Failed to send API request.";
+  } finally {
+    this.isLoading = false;
+  }
+},
+
+// Helper method to generate the chart data
+generateChartData(predictedSales) {
+  const labels = [];
+  const values = predictedSales;
+
+  // Calculate the dates starting from the next day
+  const startDate = new Date(this.currentDate);
+  startDate.setDate(startDate.getDate() + 1); // Start from the next day
+
+  for (let i = 0; i < predictedSales.length; i++) {
+    const date = new Date(startDate);
+    date.setDate(startDate.getDate() + i); // Increment the date
+    labels.push(date.toISOString().slice(0, 10)); // Format the date as YYYY-MM-DD
+  }
+
+  return { labels, values };
+},
+
+updateChart(chartData) {
+  if (chartData && chartData.labels && chartData.values) {
+    const ctx = document.getElementById('salesChart').getContext('2d');
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: chartData.labels,
+        datasets: [{
+          label: 'Sales Prediction',
+          data: chartData.values,
+          borderColor: 'rgba(75, 192, 192, 1)',
+          fill: false,
+        }],
+      },
+      options: {
+        responsive: true,
+        scales: {
+          y: {
+            beginAtZero: true,
+          },
+        },
+      },
+    });
+  } else {
+    console.error('Invalid chart data structure:', chartData);
+    this.errorMessage = "Invalid chart data structure.";
+  }
 }
-;
 
-            console.log('Sending API request with data:', payload);
-
-            try {
-                const response = await axios.post('http://127.0.0.1:5000/api/v1/ml/predict_sales', payload, {
-                    headers: {
-                        'Content-Type': 'application/json',
-                    }
-                });
-
-                // Handle successful response
-                console.log('API Response:', response.data);
-            } catch (error) {
-                // Handle error response
-                console.error('Error sending API request:', error);
-                this.errorMessage = error.response?.data?.detail || "Failed to send API request.";
-            } finally {
-                this.isLoading = false;
-            }
-        }
-    },
+,
+  },
 };
 </script>
 
