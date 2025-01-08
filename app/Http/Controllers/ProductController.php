@@ -9,8 +9,8 @@ use App\Models\Product;
 class ProductController extends Controller
 {
     public function index(){
-
-        return Inertia::render('product/index');
+        $products = Product::orderBy('id', 'desc')->paginate(10);
+        return Inertia::render('product/index', ['products' => $products]);
     }
     public function create(){
         

@@ -1,90 +1,94 @@
 <template>
-    <!-- Content Header (Page header) -->
-    <div class="content-header">
-        <div class="container-fluid">
-            <div class="row mb-2">
-                <div class="col-sm-6">
-                    <h1 class="m-0">Products Page</h1>
-                </div><!-- /.col -->
-                <div class="col-sm-6">
-                    <ol class="breadcrumb float-sm-right">
-                        <li class="breadcrumb-item"><a href="#">Home</a></li>
-                        <li class="breadcrumb-item active">Starter Page</li>
-                    </ol>
-                </div>
-                <!-- /.col -->
-            </div>
-            <!-- /.row -->
+    <button class="btn btn-primary" data-toggle="modal" data-target="#createProductModal">
+      <i class="fa fa-plus"></i> Nouveau Produit
+    </button>
+  
+    <div
+      class="modal fade"
+      id="createProductModal"
+      data-backdrop="static"
+      data-keyboard="false"
+      tabindex="-1"
+      aria-labelledby="staticBackdropLabel"
+      aria-hidden="true"
+    >
+      <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="staticBackdropLabel">Ajout d'un produit</h5>
+            <button type="button" @click="closeModal" class="close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>
+          <div class="modal-body">
+            <form @submit.prevent="soumettre" id="createForm">
+              <div class="form-group">
+                <label for="categorie">Catégorie</label>
+                <input
+                  type="text"
+                  required
+                  class="form-control"
+                  v-model="categorie"
+                  id="categorie"
+                />
+              </div>
+              <!-- Add more fields for product creation as needed -->
+              <!-- Example: -->
+              <!--
+              <div class="form-group">
+                <label for="price">Prix</label>
+                <input
+                  type="number"
+                  required
+                  class="form-control"
+                  v-model="price"
+                  id="price"
+                />
+              </div>
+              -->
+            </form>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-danger" @click="closeModal">Fermer</button>
+            <button form="createForm" type="submit" class="btn btn-success">
+              Soumettre
+            </button>
+          </div>
         </div>
-        <!-- /.container-fluid -->
+      </div>
     </div>
-    <!-- /.content-header -->
-
-    <!-- Main content -->
-    <div class="content">
-        <div class="container-fluid">
-            <div class="row">
-                <div class="col-lg-6">
-                    <div class="card">
-                        <div class="card-body">
-                            <h5 class="card-title">Card title</h5>
-
-                            <p class="card-text">
-                                Some quick example text to build on the card title and make up the bulk of the
-                                card's
-                                content.
-                            </p>
-
-                            <a href="#" class="card-link">Card link</a>
-                            <a href="#" class="card-link">Another link</a>
-                        </div>
-                    </div>
-
-                    <div class="card card-primary card-outline">
-                        <div class="card-body">
-                            <h5 class="card-title">Card title</h5>
-
-                            <p class="card-text">
-                                Some quick example text to build on the card title and make up the bulk of the
-                                card's
-                                content.
-                            </p>
-                            <a href="#" class="card-link">Card link</a>
-                            <a href="#" class="card-link">Another link</a>
-                        </div>
-                    </div><!-- /.card -->
-                </div>
-                <!-- /.col-md-6 -->
-                <div class="col-lg-6">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5 class="m-0">Featured</h5>
-                        </div>
-                        <div class="card-body">
-                            <h6 class="card-title">Special title treatment</h6>
-
-                            <p class="card-text">With supporting text below as a natural lead-in to additional
-                                content.</p>
-                            <a href="#" class="btn btn-primary">Go somewhere</a>
-                        </div>
-                    </div>
-
-                    <div class="card card-primary card-outline">
-                        <div class="card-header">
-                            <h5 class="m-0">Featured</h5>
-                        </div>
-                        <div class="card-body">
-                            <h6 class="card-title">Special title treatment</h6>
-
-                            <p class="card-text">With supporting text below as a natural lead-in to additional
-                                content.</p>
-                            <a href="#" class="btn btn-primary">Go somewhere</a>
-                        </div>
-                    </div>
-                </div>
-                <!-- /.col-md-6 -->
-            </div>
-            <!-- /.row -->
-        </div><!-- /.container-fluid -->
-    </div>
-</template>
+  </template>
+  
+  <script setup>
+  import { ref, onMounted } from "vue";
+  import { Inertia } from "@inertiajs/inertia";
+  import { useSwalSuccess, useSwalError } from '@/Composables/alert';  
+  const categorie = ref("");
+  let createModal = "";
+  
+  onMounted(() => {
+    createModal = $("#createProductModal");
+  });
+  
+  const closeModal = () => {
+    createModal.modal("hide");
+    categorie.value = "";
+  };
+  
+  const soumettre = () => {
+    const url = route("products.store"); // Update the route name to match your backend route
+    Inertia.post(
+      url,
+      { categorie: categorie.value }, // Add other fields as needed
+      {
+        onSuccess: (page) => {
+          closeModal();
+          useSwalSuccess("Produit ajouté avec succès!");
+        },
+        onError: (errors) => {
+          useSwalError("Une erreur s'est produite");
+        },
+      }
+    );
+  };
+  </script>

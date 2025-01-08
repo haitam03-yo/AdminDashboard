@@ -1,8 +1,14 @@
-@import "/node_modules/admin-lte/plugins/fontawesome-free/css/all";
-@import "/node_modules/admin-lte/plugins/select2/css/select2.min.css";
-@import "/node_modules/admin-lte/plugins/select2-bootstrap4-theme/select2-bootstrap4.min.css";
-@import "/node_modules/admin-lte/dist/css/adminlte";
-@import "/node_modules/admin-lte/plugins/select2/css/select2";
+/* FontAwesome */
+@import '@fortawesome/fontawesome-free/css/all.css';
+
+/* Select2 */
+@import 'select2/dist/css/select2.css';
+@import 'select2-bootstrap4-theme/dist/select2-bootstrap4.css'; /* Correct path for Select2 Bootstrap 4 theme */
+
+/* AdminLTE */
+@import 'admin-lte/dist/css/adminlte.css'; /* Correct path for AdminLTE CSS */
+
+/* Tailwind */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

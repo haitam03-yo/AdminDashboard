@@ -20,6 +20,7 @@
 
     </div>
 </template>
+
 <script setup>
     import Footer from './Partials/Footer.vue'
     import UpperNav from './Partials/UpperNav.vue'
