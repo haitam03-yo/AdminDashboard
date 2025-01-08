@@ -23,7 +23,7 @@ grouped = train_df.groupby('id_produit').agg(
 print(f"Number of rows in grouped data: {len(grouped)}")
 
 # Path to SQLite database file
-sqlite_db_path = 'C:/projects/DataTourCompetition/webAppProject/adminDashBoard/database/database.sqlite'
+sqlite_db_path = 'C:/Users/hp/Desktop/AdminDashboard/database/database.sqlite'
 
 # Connect to SQLite database
 try:
