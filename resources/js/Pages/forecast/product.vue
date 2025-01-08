@@ -94,11 +94,45 @@
                             </div>
                         </div>
                     </div>
-                    <div class="row d-flex justify-content-center">
-                        <div class="col-6 ">
-                            <canvas id="salesChart" ></canvas>
-                        </div>
-                    </div>
+ 
+                    <div id="showProductDetail" class="mt-4">
+    <h4 v-if="productDetails">Selected Product Details</h4>
+    <table v-if="productDetails" class="table table-bordered">
+        <tbody>
+            <tr>
+                <th>Product ID</th>
+                <td>{{ productDetails.id }}</td>
+            </tr>
+            <tr>
+                <th>Category</th>
+                <td>{{ productDetails.categorie }}</td>
+            </tr>
+            <tr>
+                <th>Brand</th>
+                <td>{{ productDetails.marque }}</td>
+            </tr>
+            <tr>
+                <th>Unit Price</th>
+                <td>{{ productDetails.prix_unitaire.toFixed(2) }} €</td>
+            </tr>
+            <tr>
+                <th>Stock Available</th>
+                <td>{{ productDetails.stock_disponible }}</td>
+            </tr>
+            <tr>
+                <th>Promotion</th>
+                <td>{{ productDetails.promotion }}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+<div class="row d-flex justify-content-center">
+  <div class="col-6" :style="{ display: chart ? 'block' : 'none' }">
+    <canvas id="salesChart"></canvas>
+  </div>
+</div>
+
+
                 
                 </div>
                 
@@ -123,187 +157,196 @@
 
 
 <script>
-
-
 import axios from 'axios';
 import { Chart } from 'chart.js';
 
 export default {
-    props: {
-        products_id: {
-            type: Array,
-            required: true,
-        },
-        get_selected_product_id:{
-            type:String,
-            default: 'ALI-012022-020',
-        }
+  props: {
+    products_id: {
+      type: Array,
+      required: true,
     },
-    data() {
-        return {
-            forecastPeriods: [
-                { label: 'Next 7 days', value: 7 },
-                { label: 'Next 15 days', value: 15 },
-                { label: 'Next 30 days', value: 30 },
-            ],
-            selectedForecastPeriod: 7,
-            dayTimeOptions: [],
-            regionOptions: [],
-            weatherOptions: [],
-            selectedDayTime: 'Soirée',
-            selectedRegion: 'Urbain',
-            selectedWeather: 'Neigeux',
-            selectedProduct: this.get_selected_product_id ,
-            productDetails: null,
-            currentDate: new Date().toISOString(),
-            isLoading: false,
-            errorMessage: null,
-        };
+    get_selected_product_id: {
+      type: String,
+      default: 'ALI-012022-020',
     },
-    created() {
-        this.fetchOptions();
-        this.fetchProductDetails();
+  },
+  data() {
+    return {
+      forecastPeriods: [
+        { label: 'Next 7 days', value: 7 },
+        { label: 'Next 15 days', value: 15 },
+        { label: 'Next 30 days', value: 30 },
+      ],
+      selectedForecastPeriod: 7,
+      dayTimeOptions: [],
+      regionOptions: [],
+      weatherOptions: [],
+      selectedDayTime: 'Soirée',
+      selectedRegion: 'Urbain',
+      selectedWeather: 'Neigeux',
+      selectedProduct: this.get_selected_product_id,
+      productDetails: null,
+      currentDate: new Date().toISOString(),
+      isLoading: false,
+      errorMessage: null,
+      chart: null, // Track chart instance
+    };
+  },
+  created() {
+    this.fetchOptions();
+    this.fetchProductDetails();
+  },
+  mounted() {
+    $(document).ready(function () {
+      $('.js-example-basic-single').select2();
+    });
+  },
+  watch: {
+    selectedProduct(newId) {
+      this.fetchProductDetails(newId);
+      this.resetChart(); // Clear the chart when product changes
     },
-    mounted() {
-        $(document).ready(function() {
-            $('.js-example-basic-single').select2();
-        });
-    },
-    watch: {
-        selectedProduct(newId) {
-            this.fetchProductDetails(newId);
-        }
-    },
-    methods: {
-        async fetchOptions() {
-            try {
-                const [weatherResponse, daytimeResponse, regionResponse] = await Promise.all([
-                    axios.get('/weather-options'),
-                    axios.get('/daytime-options'),
-                    axios.get('/region-options'),
-                ]);
-                this.weatherOptions = weatherResponse.data;
-                this.dayTimeOptions = daytimeResponse.data;
-                this.regionOptions = regionResponse.data;
-            } catch (error) {
-                console.error('Error fetching options:', error);
-            }
-        },
-
-        async fetchProductDetails(productId = this.selectedProduct) {
-            try {
-                const response = await axios.get(`/product/${productId}`);
-                this.productDetails = response.data;
-                console.log('Product details fetched:', this.productDetails);
-            } catch (error) {
-                console.error('Error fetching product details:', error);
-                this.errorMessage = "Failed to fetch product details.";
-            }
-        },
-
-        async sendApiRequest() {
-  this.isLoading = true;
-  this.errorMessage = null;
-
-  // Ensure product details are available before sending request
-  if (!this.productDetails) {
-    this.errorMessage = "Product details are not available.";
-    this.isLoading = false;
-    return;
-  }
-
-  // Log the request payload to check structure
-  const payload = {
-    id_produit: this.productDetails.id,
-    prix_unitaire: this.productDetails.prix_unitaire,
-    marque: this.productDetails.marque,
-    categorie: this.productDetails.categorie,
-    stock_disponible: this.productDetails.stock_disponible,
-    promotion: this.productDetails.promotion,
-    date: this.currentDate.slice(0, 10),
-    moment_journee: this.selectedDayTime,
-    region: this.selectedRegion,
-    condition_meteo: this.selectedWeather,
-    forecast_period: this.selectedForecastPeriod,
-  };
-
-  console.log('Sending API request with data:', payload);
-
-  try {
-    const response = await axios.post('http://127.0.0.1:5000/api/v1/ml/predict_sales', payload, {
-      headers: {
-        'Content-Type': 'application/json',
+  },
+  methods: {
+    async fetchOptions() {
+      try {
+        const [weatherResponse, daytimeResponse, regionResponse] = await Promise.all([
+          axios.get('/weather-options'),
+          axios.get('/daytime-options'),
+          axios.get('/region-options'),
+        ]);
+        this.weatherOptions = weatherResponse.data;
+        this.dayTimeOptions = daytimeResponse.data;
+        this.regionOptions = regionResponse.data;
+      } catch (error) {
+        console.error('Error fetching options:', error);
       }
-    });
+    },
 
-    console.log('API response:', response.data);
+    async fetchProductDetails(productId = this.selectedProduct) {
+      try {
+        const response = await axios.get(`/product/${productId}`);
+        this.productDetails = response.data;
+        console.log('Product details fetched:', this.productDetails);
+      } catch (error) {
+        console.error('Error fetching product details:', error);
+        this.errorMessage = 'Failed to fetch product details.';
+      }
+    },
 
-    // Check if predicted_sales data exists in the response
-    if (response.data && response.data.predicted_sales) {
-      this.chartData = this.generateChartData(response.data.predicted_sales);
-      this.updateChart(this.chartData); // Update chart with the generated data
-    } else {
-      this.errorMessage = "Predicted sales data not found in the response.";
-    }
-  } catch (error) {
-    console.error('Error sending API request:', error);
-    this.errorMessage = error.response?.data?.detail || "Failed to send API request.";
-  } finally {
-    this.isLoading = false;
-  }
-},
+    async sendApiRequest() {
+      this.isLoading = true;
+      this.errorMessage = null;
 
-// Helper method to generate the chart data
-generateChartData(predictedSales) {
-  const labels = [];
-  const values = predictedSales;
+      if (!this.productDetails) {
+        this.errorMessage = 'Product details are not available.';
+        this.isLoading = false;
+        return;
+      }
 
-  // Calculate the dates starting from the next day
-  const startDate = new Date(this.currentDate);
-  startDate.setDate(startDate.getDate() + 1); // Start from the next day
+      const payload = {
+        id_produit: this.productDetails.id,
+        prix_unitaire: this.productDetails.prix_unitaire,
+        marque: this.productDetails.marque,
+        categorie: this.productDetails.categorie,
+        stock_disponible: this.productDetails.stock_disponible,
+        promotion: this.productDetails.promotion,
+        date: this.currentDate.slice(0, 10),
+        moment_journee: this.selectedDayTime,
+        region: this.selectedRegion,
+        condition_meteo: this.selectedWeather,
+        forecast_period: this.selectedForecastPeriod,
+      };
 
-  for (let i = 0; i < predictedSales.length; i++) {
-    const date = new Date(startDate);
-    date.setDate(startDate.getDate() + i); // Increment the date
-    labels.push(date.toISOString().slice(0, 10)); // Format the date as YYYY-MM-DD
-  }
+      console.log('Sending API request with data:', payload);
 
-  return { labels, values };
-},
+      try {
+        const response = await axios.post(
+          'http://127.0.0.1:5000/api/v1/ml/predict_sales',
+          payload,
+          { headers: { 'Content-Type': 'application/json' } }
+        );
 
-updateChart(chartData) {
-  if (chartData && chartData.labels && chartData.values) {
-    const ctx = document.getElementById('salesChart').getContext('2d');
-    new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: chartData.labels,
-        datasets: [{
-          label: 'Sales Prediction',
-          data: chartData.values,
-          borderColor: 'rgba(75, 192, 192, 1)',
-          fill: false,
-        }],
-      },
-      options: {
-        responsive: true,
-        scales: {
-          y: {
-            beginAtZero: true,
-          },
-        },
-      },
-    });
-  } else {
-    console.error('Invalid chart data structure:', chartData);
-    this.errorMessage = "Invalid chart data structure.";
-  }
-}
+        if (response.data && response.data.predicted_sales) {
+          const chartData = this.generateChartData(response.data.predicted_sales);
+          this.updateChart(chartData);
+        } else {
+          this.errorMessage = 'Predicted sales data not found in the response.';
+        }
+      } catch (error) {
+        console.error('Error sending API request:', error);
+        this.errorMessage = error.response?.data?.detail || 'Failed to send API request.';
+      } finally {
+        this.isLoading = false;
+      }
+    },
 
-,
+    generateChartData(predictedSales) {
+      const labels = [];
+      const values = predictedSales;
+
+      const startDate = new Date(this.currentDate);
+      startDate.setDate(startDate.getDate() + 1);
+
+      for (let i = 0; i < predictedSales.length; i++) {
+        const date = new Date(startDate);
+        date.setDate(startDate.getDate() + i);
+        labels.push(date.toISOString().slice(0, 10));
+      }
+
+      return { labels, values };
+    },
+
+    resetChart() {
+      if (this.chart) {
+        this.chart.destroy();
+        this.chart = null;
+      }
+    },
+
+    updateChart(chartData) {
+      if (chartData && chartData.labels && chartData.values) {
+        const ctx = document.getElementById('salesChart').getContext('2d');
+
+        if (this.chart) {
+          this.chart.data.labels = chartData.labels;
+          this.chart.data.datasets[0].data = chartData.values;
+          this.chart.update();
+        } else {
+          this.chart = new Chart(ctx, {
+            type: 'line',
+            data: {
+              labels: chartData.labels,
+              datasets: [
+                {
+                  label: 'Sales Prediction',
+                  data: chartData.values,
+                  borderColor: 'rgba(75, 192, 192, 1)',
+                  fill: false,
+                  tension: 0,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              scales: {
+                y: {
+                  beginAtZero: true,
+                },
+              },
+            },
+          });
+        }
+      } else {
+        console.error('Invalid chart data structure:', chartData);
+        this.errorMessage = 'Invalid chart data structure.';
+      }
+    },
   },
 };
 </script>
+
 
 <style scoped>
 /* You can add any custom styles here */
