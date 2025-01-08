@@ -1,4 +1,5 @@
 <template>
+    
     <div class="wrapper">
 
         <!-- Navbar -->
@@ -10,6 +11,11 @@
 
         <!-- Content Wrapper. Contains page content -->
         <div class="content-wrapper">
+            <!-- <img
+            id="background"
+            class="absolute -left-20 top-0 max-w-[600px]"
+            src="https://laravel.com/assets/img/welcome/background.svg"
+        /> -->
             <slot />
         </div>
         <!-- /.content-wrapper -->

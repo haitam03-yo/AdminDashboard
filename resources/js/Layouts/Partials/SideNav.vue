@@ -5,18 +5,20 @@
         <a href="index3.html" class="brand-link">
             <img src="~admin-lte/dist/img/AdminLTELogo.png" alt="AdminLTE Logo"
                 class="brand-image img-circle elevation-3" style="opacity: .8">
-            <span class="brand-text font-weight-light">Afrique Shop</span>
+            <span class="brand-text font-weight-light">A2H AI</span>
         </a>
 
         <!-- Sidebar -->
-        <div class="sidebar">
+        <div v-if="$page.props.auth.user" class="sidebar">
             <!-- Sidebar user panel (optional) -->
-            <div class="user-panel mt-3 pb-3 mb-3 d-flex">
+            <div v-if="$page.props.auth.user" class="user-panel mt-3 pb-3 mb-3 d-flex">
                 <div class="image">
-                    <img src="~admin-lte/dist/img/user2-160x160.jpg" class="img-circle elevation-2" alt="User Image">
+                    <img src="~admin-lte/dist/img/test.png" class="img-circle elevation-2" alt="User Image">
                 </div>
                 <div class="info">
-                    <Link href="#" class="d-block">haitam</Link>
+                    <Link :href="route('profile.edit')" class="d-block">
+                        {{ $page.props.auth.user.name }}
+                    </Link>
                 </div>
             </div>
 
@@ -32,6 +34,14 @@
                             <i class="nav-icon fas fa-th"></i>
                             <p> 
                                 Home
+                            </p>
+                        </Link>
+                    </li>
+                    <li class="nav-item">
+                        <Link :href="route('dashboard')" class="nav-link" :class="{'active' :$page.component === 'Dashboard'}">
+                            <i class="nav-icon fas fa-th"></i>
+                            <p> 
+                                Dashboard
                             </p>
                         </Link>
                     </li>
